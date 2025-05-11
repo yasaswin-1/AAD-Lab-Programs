@@ -1,0 +1,203 @@
+Create a user registration application that stores the user details in a database table
+
+ActivityMain.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- EditTexts for course details -->
+    <EditText
+        android:id="@+id/idEdtCourseName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter course Name" />
+
+    <EditText
+        android:id="@+id/idEdtCourseDuration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Course Duration" />
+
+    <EditText
+        android:id="@+id/idEdtCourseTracks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Course Tracks" />
+
+    <EditText
+        android:id="@+id/idEdtCourseDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Course Description" />
+
+    <!-- Button to add courses -->
+    <Button
+        android:id="@+id/idBtnAddCourse"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Course" />
+
+    <!-- TextView to display added courses -->
+    <TextView
+        android:id="@+id/idTxtViewCourses"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Courses will appear here"
+        android:textSize="16sp"
+        android:padding="8dp" />
+</LinearLayout>
+
+MainActivity.java
+
+package com.example.sqlliteexample;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+
+    private EditText courseNameEdt, courseTracksEdt, courseDurationEdt, courseDescriptionEdt;
+    private Button addCourseBtn;
+    private TextView coursesTxtView;
+    private DBHandler dbHandler;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Initialize views
+        courseNameEdt = findViewById(R.id.idEdtCourseName);
+        courseTracksEdt = findViewById(R.id.idEdtCourseTracks);
+        courseDurationEdt = findViewById(R.id.idEdtCourseDuration);
+        courseDescriptionEdt = findViewById(R.id.idEdtCourseDescription);
+        addCourseBtn = findViewById(R.id.idBtnAddCourse);
+        coursesTxtView = findViewById(R.id.idTxtViewCourses);
+
+        dbHandler = new DBHandler(this);
+
+        // Add course logic
+        addCourseBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String courseName = courseNameEdt.getText().toString();
+                String courseTracks = courseTracksEdt.getText().toString();
+                String courseDuration = courseDurationEdt.getText().toString();
+                String courseDescription = courseDescriptionEdt.getText().toString();
+
+                if (courseName.isEmpty() || courseTracks.isEmpty() || courseDuration.isEmpty() || courseDescription.isEmpty()) {
+                    Toast.makeText(MainActivity.this, "Please enter all the details", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                dbHandler.addNewCourse(courseName, courseDuration, courseDescription, courseTracks);
+                Toast.makeText(MainActivity.this, "Course added successfully", Toast.LENGTH_SHORT).show();
+
+                courseNameEdt.setText("");
+                courseDurationEdt.setText("");
+                courseTracksEdt.setText("");
+                courseDescriptionEdt.setText("");
+
+                displayCourses();
+            }
+        });
+
+        // Display existing courses
+        displayCourses();
+    }
+
+    private void displayCourses() {
+        String courses = dbHandler.getCoursesAsString(); // Simplified method for fetching data
+        coursesTxtView.setText(courses.isEmpty() ? "No courses available" : courses);
+    }
+}
+
+
+AndroidManifest.xml
+Add the permission line inside the <manifest> tag but outside the <application> tag:
+
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+DBHandler.java
+Right-click on the com.example.exp_8 package and select New > Java Class.
+Name the class DBHandler.
+
+package com.example.sqlliteexample;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DBHandler extends SQLiteOpenHelper {
+
+    private static final String DB_NAME = "coursedb";
+    private static final int DB_VERSION = 1;
+    private static final String TABLE_NAME = "mycourses";
+
+    private static final String ID_COL = "id";
+    private static final String NAME_COL = "name";
+    private static final String DURATION_COL = "duration";
+    private static final String DESCRIPTION_COL = "description";
+    private static final String TRACKS_COL = "tracks";
+
+    public DBHandler(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        String query = "CREATE TABLE " + TABLE_NAME + " ("
+                + ID_COL + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + NAME_COL + " TEXT,"
+                + DURATION_COL + " TEXT,"
+                + DESCRIPTION_COL + " TEXT,"
+                + TRACKS_COL + " TEXT)";
+        db.execSQL(query);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        onCreate(db);
+    }
+
+    public void addNewCourse(String courseName, String courseDuration, String courseDescription, String courseTracks) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(NAME_COL, courseName);
+        values.put(DURATION_COL, courseDuration);
+        values.put(DESCRIPTION_COL, courseDescription);
+        values.put(TRACKS_COL, courseTracks);
+        db.insert(TABLE_NAME, null, values);
+        db.close();
+    }
+
+    public String getCoursesAsString() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
+
+        StringBuilder builder = new StringBuilder();
+        if (cursor.moveToFirst()) {
+            do {
+                builder.append("Name: ").append(cursor.getString(1)).append(", ")
+                        .append("Duration: ").append(cursor.getString(2)).append(", ")
+                        .append("Description: ").append(cursor.getString(3)).append(", ")
+                        .append("Tracks: ").append(cursor.getString(4)).append("\n\n");
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return builder.toString();
+    }
+}

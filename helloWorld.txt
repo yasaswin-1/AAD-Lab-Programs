@@ -1,0 +1,87 @@
+Development of Hello World Application
+
+ActivityMain.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- EditText for user to enter their name -->
+    <EditText
+        android:id="@+id/nameEditText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Enter your name"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="100dp"
+        android:padding="10dp"/>
+
+    <!-- Button to trigger greeting -->
+    <Button
+        android:id="@+id/submitButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Submit"
+        android:layout_below="@id/nameEditText"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"/>
+
+    <!-- TextView to display greeting message -->
+    <TextView
+        android:id="@+id/greetingTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:layout_below="@id/submitButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:textSize="18sp"/>
+</RelativeLayout>
+
+MainActivity.java
+
+package com.example.helloworld;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.helloworld.R;
+
+public class MainActivity extends AppCompatActivity {
+
+    private EditText nameEditText;
+    private Button submitButton;
+    private TextView greetingTextView;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main); // Ensure this points to the correct XML layout
+
+        // Initialize the views
+        nameEditText = findViewById(R.id.nameEditText);
+        submitButton = findViewById(R.id.submitButton);
+        greetingTextView = findViewById(R.id.greetingTextView);
+
+        // Set up button click listener
+        submitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Get the text entered in the EditText
+                String name = nameEditText.getText().toString().trim();
+
+                // Display greeting message if name is entered
+                if (!name.isEmpty()) {
+                    greetingTextView.setText("Hello, " + name + "!");
+                } else {
+                    greetingTextView.setText("Please enter your name.");
+                }
+            }
+        });
+    }
+}
